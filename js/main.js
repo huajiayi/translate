@@ -5,7 +5,7 @@ const key = "Yz1KlYPWReNbAjuJ4a1W";
 const salt = 1435660288;
 const url = "http://api.fanyi.baidu.com/api/trans/vip/translate";
 
-//请求翻译API
+// 请求翻译API
 function requestApi(query, callback){
     var sign = md5(appid + query + salt + key);
 
@@ -31,7 +31,7 @@ function requestApi(query, callback){
     });
 }
 
-//遍历Json对象，找到一个属性就callback
+// 遍历Json对象，找到一个属性就callback
 function traverse(obj, callback){
     for (const p in obj) {
         if(obj.hasOwnProperty(p) && typeof obj[p] == "object"){
@@ -42,7 +42,7 @@ function traverse(obj, callback){
     }
 }
 
-//递归翻译Json中的文本，成功回调true，失败回调false
+// 递归翻译Json中的文本，成功回调true，失败回调false
 function translateObj(obj, callback){
     for (const p in obj) {
         if(obj.hasOwnProperty(p) && typeof obj[p] == "object"){
@@ -61,8 +61,8 @@ function translateObj(obj, callback){
     }
 }
 
-//获取Json属性总数（待翻译的文本数量）
-function getCount(obj, callback){
+// 获取Json属性总数（待翻译的文本数量）
+function getCount(obj){
     var count = 0;
     traverse(obj, function(){
         count++;
@@ -70,7 +70,7 @@ function getCount(obj, callback){
     return count;
 }
 
-//翻译Json，回调翻译成功和失败的数量
+// 翻译Json，回调翻译成功和失败的数量
 function translate(obj, callback){
     var count = 0;
     var successCount = 0;
@@ -84,15 +84,41 @@ function translate(obj, callback){
         }else{
             errorCount++;
         }
-        $("#progress").attr("class", "progress-radial progress-" + ((successCount + errorCount)/count*100));
+        $("#progress").attr("class", "progress-radial progress-" + parseInt(((successCount + errorCount)/count*100)));
 
         if(successCount + errorCount == count) callback(successCount, errorCount);
     });
 }
 
+// 翻译普通文本
+function translateText(textArr, callback){
+    var count = textArr.length;
+    var successCount = 0;
+    var errorCount = 0;
+
+    for(var i in textArr){
+        (function(i){
+            requestApi(textArr[i], function(result){
+                if(result != null){
+                    textArr[i] = result;
+                    successCount++;
+                }else{
+                    textArr[i] = "";
+                    errorCount++;
+                }
+                $("#progress").attr("class", "progress-radial progress-" + parseInt(((successCount + errorCount)/count*100)));
+        
+                if(successCount + errorCount == count) callback();
+            });
+        }(i))
+    }
+}
+
 $(function(){
     $("#translate").click(function(){
+        // 初始化状态
         $("#progress").attr("class", "progress-radial progress-0");
+        $("#progressInfo").text("请稍等。。。");
 
         var query = $("#query").val();
         if(query == null || query == "") return;
@@ -107,7 +133,7 @@ $(function(){
         $("#progress").show();
         $("#progressInfo").show();
 
-        //如果是数字，则直接显示，不进行翻译
+        // 如果是数字，则直接显示，不进行翻译
         if(Number(query).toString() != "NaN"){
             $("#result").val(query);
             $("#progress").attr("class", "progress-radial progress-100");
@@ -115,22 +141,20 @@ $(function(){
             return;
         };
 
-        //如果是普通文本，则直接翻译
+        // 如果是普通文本，则直接翻译
         if(objStr == null){
-            requestApi(query, function(result){
-                $("#progress").attr("class", "progress-radial progress-100");
-                if(result == null){
-                    $("#progressInfo").text("翻译失败！");
-                    return;
-                }
+            $("#result").val("");  // 清空result文本
 
-                $("#result").val(result);
+            // 一行一行翻译
+            var querys = query.split('\n');
+            translateText(querys, function(){
+                $("#result").val(querys.join('\n'));
                 $("#progressInfo").text("翻译成功！");
             });
             return;
         }
     
-        //翻译Json文本
+        // 翻译Json文本
         translate(objStr, function(successCount, errorCount){
             $("#progressInfo").text("共" + (successCount + errorCount) + "个     成功" + successCount + "个     失败" + errorCount + "个");
             $("#result").val(JSON.stringify(objStr, null, "\t"));
