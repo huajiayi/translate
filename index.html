@@ -27,6 +27,10 @@
         }
 
         .query, .result {
+            width: 30%;
+            min-width: 230px;
+            height: 70%;
+            min-height: 650px;
             resize: none;
             border-radius: 10px;
         }
@@ -57,7 +61,7 @@
     </style>
 </head>
 <body class="flex-box">
-    <textarea id="query" class="query" cols="70" rows="40" placeholder="请输入需要翻译的文字或Json"></textarea>
+    <textarea id="query" class="query" placeholder="请输入需要翻译的文字或Json"></textarea>
     <div class="progressBox">
         <div id="progress" class="progress-radial progress-0"><b></b></div>
         <br/><br/>
@@ -65,7 +69,7 @@
         <br/><br/>
         <button id="translate" type="button" class="btn">翻译！</button>
     </div>
-    <textarea id="result" class="result" cols="70" rows="40"></textarea>
+    <textarea id="result" class="result"></textarea>
     
     <script src="js/jquery.js"></script>
     <script src="js/md5.min.js"></script>
